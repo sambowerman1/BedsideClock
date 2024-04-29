@@ -9,6 +9,7 @@ from workouts import workoutlist
 
 # Setup the main window
 root = tk.Tk()
+root.attributes('-fullscreen', True)
 root.configure(bg='black')
 root.title("Smart Clock")
 
