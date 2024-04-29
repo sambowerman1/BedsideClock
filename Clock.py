@@ -40,8 +40,19 @@ def update_temp():
     # temperature = response['main']['temp']
     # Or using a sensor:
     # humidity, temperature = Adafruit_DHT.read_retry(sensor, pin)
-    temperature = "76°F"  # Placeholder value
-    temp_label.config(text=temperature)
+    api_key = "f02c0176f2d7633e788328570828db4e"
+    response = requests.get(f"http://api.openweathermap.org/data/2.5/weather?q=St. Louis,us&appid={api_key}")
+    weather_data = response.json()
+
+
+    current_temp = weather_data['main']['temp']
+    current_temp_f = round((current_temp - 273.15) * 9/5 + 32)
+
+
+    
+
+
+    temp_label.config(text=f"Temperature: {current_temp_f}°F")
     root.after(180000, update_temp)  # update temperature every minute
 
 
