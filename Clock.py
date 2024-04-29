@@ -9,22 +9,23 @@ from workouts import workoutlist
 
 # Setup the main window
 root = tk.Tk()
+root.configure(bg='black')
 root.title("Smart Clock")
 
 # Add the time display
-time_label = tk.Label(root, font=('Helvetica', 48))
+time_label = tk.Label(root, font=('Helvetica', 48), fg='grey', bg='black'  ) 
 time_label.pack()
 
 # Add the temperature display
-temp_label = tk.Label(root, font=('Helvetica', 24))
+temp_label = tk.Label(root, font=('Helvetica', 24), fg='grey', bg='black' )
 temp_label.pack()
 
 # Add the workout display
-workout_label = tk.Label(root, font=('Helvetica', 24))
+workout_label = tk.Label(root, font=('Helvetica', 24) , fg='grey', bg='black')
 workout_label.pack()
 
 
-date_label = tk.Label(root, font=('Helvetica', 24))
+date_label = tk.Label(root, font=('Helvetica', 24), fg='grey', bg='black' )
 date_label.pack()
 
 def update_time():
