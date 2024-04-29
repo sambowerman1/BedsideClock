@@ -2,6 +2,8 @@ import tkinter as tk
 import requests
 from datetime import datetime
 from datetime import timedelta
+from workouts import workoutlist
+
 # If using a sensor:
 # import Adafruit_DHT
 
@@ -51,13 +53,13 @@ def update_date():
 
 def update_workout():
     
-    # for workout in workouts:
-    #     if workout[0] == datetime.now().strftime("%Y-%m-%d"):
-    #         workout_info = workout[1]
-    #     else:
-    #         workout_info = "Rest Day"
+    for i in range(len(workoutlist)):
+        if workoutlist[i][0] == datetime.now().strftime("%Y-%m-%d"):
+            workout_info = workoutlist[i][1]
+        else:
+            workout_info = "Rest Day"
 
-    workout_info = "Rest Day"  # Placeholder value
+    # workout_info = "Rest Day"  
     
     workout_label.config(text=f"Today's Workout: {workout_info}")
     root.after(600000, update_workout)  # update workout every minute
