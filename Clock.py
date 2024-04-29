@@ -3,6 +3,22 @@ import requests
 from datetime import datetime
 from datetime import timedelta
 from workouts import workoutlist
+import robin_stocks as rh
+import getpass
+
+
+username = 'sam@bowerman.org'
+password = 'hidden'
+rh.robinhood.authentication.login(username, password)
+
+
+account_info = rh.robinhood.profiles.load_portfolio_profile()
+Equity = account_info['equity']
+print("Current Buying Power: $", account_info['equity'])
+
+
+
+
 
 # If using a sensor:
 # import Adafruit_DHT
@@ -16,6 +32,11 @@ root.title("Smart Clock")
 # Add the time display
 time_label = tk.Label(root, font=('Helvetica', 48), fg='grey', bg='black'  ) 
 time_label.pack()
+
+
+equity_label = tk.Label(root, font=('Helvetica', 24), fg='grey', bg='black')
+equity_label.pack()
+
 
 # Add the temperature display
 temp_label = tk.Label(root, font=('Helvetica', 24), fg='grey', bg='black' )
@@ -33,6 +54,13 @@ def update_time():
     current_time = datetime.now().strftime("%I:%M %p")
     time_label.config(text=current_time)
     root.after(1000, update_time)  # update time every second
+
+
+def update_equity():
+    account_info = rh.robinhood.profiles.load_portfolio_profile()
+    equity = account_info['equity']
+    equity_label.config(text=f"Equity: ${equity}")
+    root.after(300000, update_equity)
 
 
 
@@ -88,5 +116,8 @@ update_time()
 update_date()
 update_temp()
 update_workout()
+update_equity()
+
+
 
 root.mainloop()
