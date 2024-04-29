@@ -29,9 +29,12 @@ date_label = tk.Label(root, font=('Helvetica', 24), fg='grey', bg='black' )
 date_label.pack()
 
 def update_time():
-    current_time = datetime.now().strftime("%H:%M:%S")
+    current_time = datetime.now().strftime("%I:%M %p")
     time_label.config(text=current_time)
     root.after(1000, update_time)  # update time every second
+
+
+
 
 def update_temp():
     # Fetch the temperature from an API or sensor
