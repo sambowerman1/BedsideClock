@@ -96,12 +96,13 @@ def update_date():
 
 
 def update_workout():
-    
+        
     for i in range(len(workoutlist)):
-        if workoutlist[i][0] == datetime.now().strftime("%Y-%m-%d"):
-            workout_info = workoutlist[i][1]
-        else:
-            workout_info = "Rest Day"
+            if workoutlist[i][0] == datetime.now().strftime("%m-%d-%Y"):
+                workout_info = workoutlist[i][1]
+                
+            else:
+                workout_info = "Rest Day"
 
     # workout_info = "Rest Day"  
     
