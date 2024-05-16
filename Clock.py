@@ -1,24 +1,57 @@
+import os
 import requests
 from datetime import datetime
-from datetime import timedelta
 from workouts import workoutlist
-import robin_stocks as rh
-import getpass
-from IT8951.display import AutoEPDDisplay
+import robin_stocks.robinhood as rh
+from getpass import getpass
 from PIL import Image, ImageDraw, ImageFont
+from waveshare_epd import epd7in5_V2  # Adjust for your display
 
-# Replace these with your Robinhood login credentials
-username = 'sam@bowerman.org'
-password = 'hidden'
-rh.robinhood.authentication.login(username, password)
+# Path to the pickle file
+pickle_path = os.path.expanduser("~/.robinhood.pickle")
 
-account_info = rh.robinhood.profiles.load_portfolio_profile()
-equity = account_info['equity']
-print("Current Buying Power: $", account_info['equity'])
+# Function to login to Robinhood
+def login_robinhood():
+    username = 'sam@bowerman.org'
+    password = getpass("Enter Robinhood password: ")
+    mfa_code = getpass("Enter MFA code (if applicable, else leave blank): ")
+    try:
+        if mfa_code:
+            login = rh.login(username, password, mfa_code=mfa_code)
+        else:
+            login = rh.login(username, password)
+        return login
+    except Exception as e:
+        print(f"Error during login: {e}")
+        return None
+
+# Try to delete the existing pickle file if it exists
+if os.path.exists(pickle_path):
+    try:
+        os.remove(pickle_path)
+        print("Deleted existing pickle file.")
+    except Exception as e:
+        print(f"Error deleting pickle file: {e}")
+
+# Call the login function
+login = login_robinhood()
+if not login:
+    print("Login failed. Exiting.")
+    exit()
+
+# Retrieve account information
+try:
+    account_info = rh.profiles.load_portfolio_profile()
+    equity = account_info['equity']
+    print("Current Buying Power: $", account_info['equity'])
+except Exception as e:
+    print(f"Error retrieving account info: {e}")
+    exit()
 
 # Initialize the ePaper display
-display = AutoEPDDisplay(vcom=-1.52)  # Adjust vcom value as needed
-display.clear()
+epd = epd7in5_V2.EPD()
+epd.init()
+epd.Clear()
 
 # Load fonts
 font_large = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 48)
@@ -27,7 +60,7 @@ font_small = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf
 
 def update_display():
     # Create a new image with white background
-    image = Image.new('1', display.dimensions, 255)
+    image = Image.new('1', (epd.width, epd.height), 255)
     draw = ImageDraw.Draw(image)
     
     # Add time
@@ -39,31 +72,43 @@ def update_display():
     draw.text((10, 70), f"Date: {current_date}", font=font_medium, fill=0)
     
     # Add equity
-    account_info = rh.robinhood.profiles.load_portfolio_profile()
-    equity = account_info['equity']
-    draw.text((10, 100), f"Equity: ${equity}", font=font_medium, fill=0)
+    try:
+        account_info = rh.profiles.load_portfolio_profile()
+        equity = account_info['equity']
+        draw.text((10, 100), f"Equity: ${equity}", font=font_medium, fill=0)
+    except Exception as e:
+        draw.text((10, 100), "Equity: Error", font=font_medium, fill=0)
+        print(f"Error retrieving equity info: {e}")
     
     # Add temperature
-    api_key = "f02c0176f2d7633e788328570828db4e"
-    response = requests.get(f"http://api.openweathermap.org/data/2.5/weather?q=St. Louis,us&appid={api_key}")
-    weather_data = response.json()
-    current_temp = weather_data['main']['temp']
-    current_temp_f = round((current_temp - 273.15) * 9/5 + 32)
-    draw.text((10, 130), f"Temperature: {current_temp_f}°F", font=font_medium, fill=0)
+    try:
+        api_key = "f02c0176f2d7633e788328570828db4e"
+        response = requests.get(f"http://api.openweathermap.org/data/2.5/weather?q=St. Louis,us&appid={api_key}")
+        weather_data = response.json()
+        current_temp = weather_data['main']['temp']
+        current_temp_f = round((current_temp - 273.15) * 9/5 + 32)
+        draw.text((10, 130), f"Temperature: {current_temp_f}°F", font=font_medium, fill=0)
+    except Exception as e:
+        draw.text((10, 130), "Temperature: Error", font=font_medium, fill=0)
+        print(f"Error retrieving temperature info: {e}")
     
     # Add workout
     workout_info = "Rest Day"
-    for i in range(len(workoutlist)):
-        if workoutlist[i][0] == datetime.now().strftime("%m-%d-%Y"):
-            workout_info = workoutlist[i][1]
-            break
-    draw.text((10, 160), f"Today's Workout: {workout_info}", font=font_medium, fill=0)
+    try:
+        for i in range(len(workoutlist)):
+            if workoutlist[i][0] == datetime.now().strftime("%m-%d-%Y"):
+                workout_info = workoutlist[i][1]
+                break
+        draw.text((10, 160), f"Today's Workout: {workout_info}", font=font_medium, fill=0)
+    except Exception as e:
+        draw.text((10, 160), "Workout: Error", font=font_medium, fill=0)
+        print(f"Error retrieving workout info: {e}")
     
     # Display the image
-    display.show_image(image)
+    epd.display(epd.getbuffer(image))
 
     # Schedule the next update
-    display.epd.wait_for_busy(timeout=60)
+    epd.sleep()
     update_display()
 
 # Initial update
