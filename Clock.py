@@ -3,6 +3,7 @@ import requests
 from datetime import datetime
 from waveshare_epd import epd7in5_V2
 from PIL import Image, ImageDraw, ImageFont
+from workouts import workoutlist
 import robin_stocks.robinhood as rh
 
 # Robinhood login
@@ -47,10 +48,9 @@ def update_date(draw):
     draw.text((10, 190), current_date, font=font_medium, fill=0)
 
 def update_workout(draw):
-    workoutlist = [("05-17-2024", "Running"), ("05-18-2024", "Rest Day")]
-    for workout in workoutlist:
-        if workout[0] == datetime.now().strftime("%m-%d-%Y"):
-            workout_info = workout[1]
+    for i in range(len(workoutlist)):
+        if workoutlist[i][0] == datetime.now().strftime("%m-%d-%Y"):
+            workout_info = workoutlist[i][1]
             break
     else:
         workout_info = "Rest Day"
