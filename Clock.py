@@ -1,6 +1,18 @@
 import time
 import requests
 from datetime import datetime
+
+
+from gpiozero import Device
+from gpiozero.pins.pigpio import PiGPIOFactory
+
+Device.pin_factory = PiGPIOFactory()
+
+from waveshare_epd import epd7in5
+import gpiozero
+import atexit
+
+
 from waveshare_epd import epd7in5
 from PIL import Image, ImageDraw, ImageFont
 import robin_stocks as rh
