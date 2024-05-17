@@ -1,124 +1,83 @@
-import tkinter as tk
+import time
 import requests
 from datetime import datetime
-from datetime import timedelta
-from workouts import workoutlist
+from waveshare_epd import epd7in5
+from PIL import Image, ImageDraw, ImageFont
 import robin_stocks as rh
-import getpass
 
-
+# Robinhood login
 username = 'sam@bowerman.org'
-password = 'hidden'
+password = 'e'
 rh.robinhood.authentication.login(username, password)
 
+# Set up the ePaper display
+epd = epd7in5.EPD()
+epd.init()
 
-account_info = rh.robinhood.profiles.load_portfolio_profile()
-Equity = account_info['equity']
-print("Current Buying Power: $", account_info['equity'])
+# Create a blank image for drawing.
+width, height = epd7in5.EPD_WIDTH, epd7in5.EPD_HEIGHT
+image = Image.new('1', (width, height), 255)  # 255: clear the frame
+draw = ImageDraw.Draw(image)
 
+# Load a font
+font_large = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 48)
+font_medium = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 24)
+font_small = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 20)
 
-
-
-
-# If using a sensor:
-# import Adafruit_DHT
-
-# Setup the main window
-root = tk.Tk()
-root.attributes('-fullscreen', True)
-root.configure(bg='black')
-root.title("Smart Clock")
-
-# Add the time display
-time_label = tk.Label(root, font=('Helvetica', 48), fg='grey', bg='black'  ) 
-time_label.pack()
-
-
-equity_label = tk.Label(root, font=('Helvetica', 24), fg='grey', bg='black')
-equity_label.pack()
-
-
-# Add the temperature display
-temp_label = tk.Label(root, font=('Helvetica', 24), fg='grey', bg='black' )
-temp_label.pack()
-
-# Add the workout display
-workout_label = tk.Label(root, font=('Helvetica', 24) , fg='grey', bg='black')
-workout_label.pack()
-
-
-date_label = tk.Label(root, font=('Helvetica', 24), fg='grey', bg='black' )
-date_label.pack()
-
-def update_time():
+# Define update functions
+def update_time(draw):
     current_time = datetime.now().strftime("%I:%M %p")
-    time_label.config(text=current_time)
-    root.after(1000, update_time)  # update time every second
-
-
-def update_equity():
+    draw.text((10, 10), current_time, font=font_large, fill=0)
+    epd.display(epd.getbuffer(image))
+    epd.sleep()
+    
+def update_equity(draw):
     account_info = rh.robinhood.profiles.load_portfolio_profile()
     equity = account_info['equity']
-    equity_label.config(text=f"Equity: ${equity}")
-    root.after(300000, update_equity)
+    draw.text((10, 70), f"Equity: ${equity}", font=font_medium, fill=0)
+    epd.display(epd.getbuffer(image))
+    epd.sleep()
 
-
-
-
-def update_temp():
-    # Fetch the temperature from an API or sensor
-    # For example, using OpenWeatherMap API:
-    # response = requests.get('API_URL').json()
-    # temperature = response['main']['temp']
-    # Or using a sensor:
-    # humidity, temperature = Adafruit_DHT.read_retry(sensor, pin)
+def update_temp(draw):
     api_key = "f02c0176f2d7633e788328570828db4e"
     response = requests.get(f"http://api.openweathermap.org/data/2.5/weather?q=St. Louis,us&appid={api_key}")
     weather_data = response.json()
-
-
     current_temp = weather_data['main']['temp']
     current_temp_f = round((current_temp - 273.15) * 9/5 + 32)
+    draw.text((10, 130), f"Temperature: {current_temp_f}°F", font=font_medium, fill=0)
+    epd.display(epd.getbuffer(image))
+    epd.sleep()
 
+def update_date(draw):
+    current_date = datetime.now().strftime("%m-%d-%Y")
+    draw.text((10, 190), current_date, font=font_medium, fill=0)
+    epd.display(epd.getbuffer(image))
+    epd.sleep()
 
-    
-
-
-    temp_label.config(text=f"Temperature: {current_temp_f}°F")
-    root.after(180000, update_temp)  # update temperature every minute
-
-
-def update_date():
-    current_date = datetime.now().strftime("%m-%d-%Y")  # format as you prefer
-    date_label.config(text=current_date)
-    root.after(600000, update_date) # update date every 10 minutes
-    
-
-
-def update_workout():
-        
+def update_workout(draw):
     for i in range(len(workoutlist)):
-            if workoutlist[i][0] == datetime.now().strftime("%m-%d-%Y"):
-                workout_info = workoutlist[i][1]
-                
-            else:
-                workout_info = "Rest Day"
+        if workoutlist[i][0] == datetime.now().strftime("%m-%d-%Y"):
+            workout_info = workoutlist[i][1]
+            break
+    else:
+        workout_info = "Rest Day"
+    draw.text((10, 250), f"Today's Workout: {workout_info}", font=font_medium, fill=0)
+    epd.display(epd.getbuffer(image))
+    epd.sleep()
 
-    # workout_info = "Rest Day"  
-    
-    workout_label.config(text=f"Today's Workout: {workout_info}")
-    root.after(600000, update_workout)  # update workout every minute
+# Update the display
+def main():
+    while True:
+        image = Image.new('1', (width, height), 255)
+        draw = ImageDraw.Draw(image)
+        
+        update_time(draw)
+        update_equity(draw)
+        update_temp(draw)
+        update_date(draw)
+        update_workout(draw)
+        
+        time.sleep(600)  # Update every 10 minutes
 
-
-
-# Initialize all the labels
-update_time()
-
-update_date()
-update_temp()
-update_workout()
-update_equity()
-
-
-
-root.mainloop()
+if __name__ == "__main__":
+    main()
